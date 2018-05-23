@@ -3,7 +3,7 @@ import rospy
 # import roslib; roslib.load_manifest('clover_auto')
 import serial
 from sensor_msgs.msg import NavSatFix
-from std_srvs.srv import Trigger
+from std_srvs.srv import Trigger, TriggerResponse
 
 
 class WaypointWriter():
@@ -13,23 +13,23 @@ class WaypointWriter():
     def __init__(self):
         self.sub = rospy.Subscriber('fix', NavSatFix, self.fix_callback)
         self.serv =  rospy.Service('record', Trigger, self.record_callback)
-        self.ser = serial.Serial(self.PATH)
+        self.ser = serial.Serial(self.PATH, 115200)
 
     def fix_callback(self, fix):
         self.fix = fix
 
-    def record_callback(self):
+    def record_callback(self, req):
         with open(self.WAYPOINT_FILE, 'a') as f:
             f.write(self.get_data_string())
-        trigger = Trigger()
+        trigger = TriggerResponse()
         trigger.success = True
         return trigger
 
     def get_data_string(self):
         serial_line = self.ser.readline()
         theta = float(serial_line.split(':')[1])
-        data_string = ''.join((self.fix.latitude, self.fix.longitude, theta))
-        return data_string + '\n'
+        return '{},{},{}\n'.format(self.fix.latitude, 
+                                   self.fix.longitude, theta)
 
 
 def main():
