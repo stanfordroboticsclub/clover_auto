@@ -9,12 +9,12 @@ class WaypointReader():
 
     def __init__(self):
         with open(self.WAYPOINT_FILE, 'r') as f:
-            waypoints = [self.convert_to_fix(t) for t in f.read().splitlines()]
+            self.waypoints = [self.convert_to_fix(t) for t in 
+                              f.read().splitlines()]
 
         self.pub = rospy.Publisher('waypoint', NavSatFix, queue_size=10)
         self.sub = rospy.Subscriber('fix', NavSatFix, self.fix_callback)
-        self.rate = rospy.Rate(10)
-        self.waypoint = waypoints.pop()
+        self.waypoint = self.waypoints.pop(0)
 
     @staticmethod
     def convert_to_fix(waypoint_text):
@@ -31,19 +31,17 @@ class WaypointReader():
         return dist < self.THRESHOLD
 
     def fix_callback(self, fix):
-        while not rospy.is_shutdown():
-            if self.at_goal(fix) and len(self.waypoints) > 0:
-                self.waypoint = convert_to_fix(self.waypoints.pop())
-            self.pub.publish(waypoint) 
-            self.rate.sleep()
+        if self.at_goal(fix) and len(self.waypoints) > 0:
+            self.waypoint = convert_to_fix(self.waypoints.pop(0))
+        self.pub.publish(self.waypoint) 
 
 
 def main():
-    wr = WaypointReader()
     rospy.init_node('waypoint_reader', anonymous=True)
+    wr = WaypointReader()
     try:
         rospy.spin()
-    except rospy.ROSInterruptException:
+    except rospy.ROSInterruptException, KeyboardInterrupt:
         pass
 
 
