@@ -39,7 +39,7 @@ class WaypointReader():
 
 
 def main():
-    rospy.init_node('waypoint_reader', anonymous=True)
+    rospy.init_node('waypoint_reader', anonymous=False)
     wr = WaypointReader()
     try:
         rospy.spin()

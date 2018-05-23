@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import rospy
+# import roslib; roslib.load_manifest('clover_auto')
 import serial
 from sensor_msgs.msg import NavSatFix
-from std_srvs.msg import Trigger
+from std_srvs.srv import Trigger
 
 
 class WaypointWriter():
@@ -11,7 +12,7 @@ class WaypointWriter():
 
     def __init__(self):
         self.sub = rospy.Subscriber('fix', NavSatFix, self.fix_callback)
-        self.serv =  rospy.Service('record', None, self.record_callback)
+        self.serv =  rospy.Service('record', Trigger, self.record_callback)
         self.ser = serial.Serial(self.PATH)
 
     def fix_callback(self, fix):
@@ -26,13 +27,13 @@ class WaypointWriter():
 
     def get_data_string(self):
         serial_line = self.ser.readline()
-        theta = float(serial_line.split(',')[1])
+        theta = float(serial_line.split(':')[1])
         data_string = ''.join((self.fix.latitude, self.fix.longitude, theta))
         return data_string + '\n'
 
 
 def main():
-    rospy.init_node('waypoint_writer', anonymous=True)
+    rospy.init_node('waypoint_writer', anonymous=False)
     ww = WaypointWriter()
     try:
         rospy.spin()
